@@ -23,14 +23,18 @@ class RepoHandler {
 
     private final String ADOPT_JENKINS_DEFAULTS_URL = "https://raw.githubusercontent.com/adoptium/ci-jenkins-pipelines/master/pipelines/defaults.json"
 
+    private final String ADOPT_DEFAULT_FILE="adoptium-default.json"
+    private final String USER_DEFAULT_FILE="dragonwell-default.json"
+
     /*
     Constructor
     */
-    RepoHandler (Map<String, ?> configs) {
+    RepoHandler (Map<String, ?> configs, def context) {
         this.configs = configs
-
-        def getAdopt = new URL(ADOPT_JENKINS_DEFAULTS_URL).openConnection()
-        this.ADOPT_DEFAULTS_JSON = new JsonSlurper().parseText(getAdopt.getInputStream().getText()) as Map
+        context.println "set config use local cache [adoptium]"
+        def config_content = context.libraryResource("$ADOPT_DEFAULT_FILE")
+        context.println "${config_content}"
+        this.ADOPT_DEFAULTS_JSON = new JsonSlurper().parseText(config_content) as Map
     }
 
     /*
@@ -62,9 +66,12 @@ class RepoHandler {
             this.USER_DEFAULTS_JSON = content
         } else {
             try {
-                def getUser = new URL(content).openConnection()
-                this.USER_DEFAULTS_JSON = new JsonSlurper().parseText(getUser.getInputStream().getText()) as Map
+                context.println "set config use local cache [dragonwell]"
+                def config_content = context.libraryResource("$USER_DEFAULT_FILE")
+                context.println "${config_content}"
+                this.USER_DEFAULTS_JSON = new JsonSlurper().parseText(config_content) as Map
             } catch (Exception e) {
+                context.println "$e"
                 context.println "[WARNING] Given path for setUserDefaultsJson() is malformed or not valid. Attempting to parse the path as a JSON string..."
                 this.USER_DEFAULTS_JSON = new JsonSlurper().parseText(content) as Map
             }
